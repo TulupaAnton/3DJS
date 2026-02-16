@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 // SCENE
 const scene = new THREE.Scene()
 //? light
@@ -35,18 +35,43 @@ controls.enableDamping = true
 controls.dampingFactor = 0.05
 controls.screenSpacePanning = false
 controls.minDistance = 2
-controls.maxDistance = 10
+controls.maxDistance = 20
 
 // const texture = new THREE.TextureLoader().load('img/grass.jpg')
 // const textureMaterial = new THREE.MeshBasicMaterial({ map: texture })
 
 // Создаиние различніх фигур
-
+const originMaterial = new THREE.MeshStandardMaterial({ color: 'red' })
+const hilightMaterial = new THREE.MeshStandardMaterial({
+  color: 'yellow',
+  emissive: 'white',
+  emissiveIntensity: 0.5
+})
 const material = new THREE.MeshStandardMaterial({ color: 'red' })
 const geometry = new THREE.BoxGeometry()
-const cube = new THREE.Mesh(geometry, material)
+const cube = new THREE.Mesh(geometry, originMaterial)
 cube.position.set(0, 0, 0)
-scene.add(cube)
+//scene.add(cube)
+
+// LOAD
+const loader = new GLTFLoader()
+loader.load(
+  'models/cartoon_car/scene.gltf',
+  gltf => {
+    const model = gltf.scene
+    model.scale.set(1, 1, 1)
+    model.position.set(1, 1, 1)
+    scene.add(model)
+  },
+  xhr => {
+    console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+  },
+  error => {
+    console.error('Error' + error)
+  }
+)
+
+// END LOAD
 
 // GSAP
 // gsap.to(cube.position, {
@@ -65,34 +90,33 @@ const sphere = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: 'green' })
 )
 sphere.position.x = 2
-scene.add(sphere)
+//scene.add(sphere)
 //!
 
-// const raycaster = new THREE.Raycaster()
-// const mouse = new THREE.Vector2()
+const raycaster = new THREE.Raycaster()
+const mouse = new THREE.Vector2()
 
-// function onMouseClick (event) {
-//   mouse.x = (event.clientX / window.innerWidth) * 2 - 1
-//   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+function onMouseMove (event) {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+}
+window.addEventListener('mousemove', onMouseMove)
 
-//   raycaster.setFromCamera(mouse, camera)
-
-//   const intersects = raycaster.intersectObjects(scene.children, true)
-
-//   if (intersects.length > 0) {
-//     intersects[0].object.material.color.set('blue')
-//     alert('Clicked on item')
-//   }
-// }
-// window.addEventListener('mousemove', onMouseClick)
-
-//Infinity render
+// Infinity render
 function animate () {
   requestAnimationFrame(animate)
 
-  // cube.rotation.x += 0.01
-  // cube.rotation.y += 0.01
+  raycaster.setFromCamera(mouse, camera)
+
+  const intersects = raycaster.intersectObject(cube)
+
+  if (intersects.length > 0) {
+    // cube.material = hilightMaterial
+  } else {
+    // cube.material(originMaterial)
+  }
   controls.update()
+  renderer.setClearColor('lightblue')
   renderer.render(scene, camera)
 }
 animate()
